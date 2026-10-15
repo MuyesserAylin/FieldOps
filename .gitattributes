@@ -1,0 +1,8 @@
+# Let Git handle line endings automatically
+* text=auto
+
+# These files must always use LF line endings (Linux-friendly)
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
