@@ -1,0 +1,15 @@
+services:
+  fieldops-db:
+    image: postgis/postgis:17-3.5
+    container_name: fieldops-db
+    environment:
+      POSTGRES_DB: fieldops
+      POSTGRES_USER: fieldops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - fieldops-data:/var/lib/postgresql/data
+
+volumes:
+  fieldops-data:
