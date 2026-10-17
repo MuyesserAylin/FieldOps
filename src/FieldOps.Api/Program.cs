@@ -7,7 +7,8 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString, npgsql => npgsql.UseNetTopologySuite()));
+    options.UseNpgsql(connectionString, npgsql => npgsql.UseNetTopologySuite())
+           .UseSnakeCaseNamingConvention());
 
 builder.Services.AddControllers();
 
