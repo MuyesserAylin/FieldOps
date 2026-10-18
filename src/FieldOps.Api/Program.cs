@@ -1,4 +1,5 @@
 using FieldOps.Api.Data;
+using FieldOps.Api.Time;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
            .UseSnakeCaseNamingConvention());
 
 builder.Services.AddControllers();
-
+builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
