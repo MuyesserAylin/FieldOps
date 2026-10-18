@@ -1,5 +1,6 @@
 using FieldOps.Api.Data;
 using FieldOps.Api.Time;
+using FieldOps.Api.Tracking;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddSingleton<ITrackingCodeGenerator, TrackingCodeGenerator>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
