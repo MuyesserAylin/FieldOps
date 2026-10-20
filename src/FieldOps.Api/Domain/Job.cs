@@ -29,6 +29,19 @@ public class Job
         Status = JobStatus.Queued;
     }
 
+    public JobStatusHistory TransitionTo(JobStatus newStatus, DateTimeOffset changedAt)
+    {
+        if (!JobStatusTransitions.IsAllowed(Status, newStatus))
+        {
+            throw new InvalidJobTransitionException(Status, newStatus);
+        }
+
+        var oldStatus = Status;
+        Status = newStatus;
+
+        return new JobStatusHistory(this, oldStatus, newStatus, changedAt);
+    }
+
     public long Id { get; private set; }
     public int FaultTypeId { get; private set; }
     public FaultType FaultType { get; private set; } = null!;
