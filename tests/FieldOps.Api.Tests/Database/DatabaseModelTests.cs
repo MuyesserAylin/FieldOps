@@ -115,4 +115,34 @@ public class DatabaseModelTests : IAsyncLifetime
         Assert.Equal("Queued", rawStatus);
         Assert.Equal(4, rawUrgency);
     }
+
+    [Fact]
+    public async Task TwoContextsChangingSameJob_SecondSaveThrowsConcurrencyException()
+    {
+        var now = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        long jobId;
+
+        await using (var setupDb = _fixture.CreateDbContext())
+        {
+            var faultType = await setupDb.FaultTypes.SingleAsync(f => f.Name == "Gas leak");
+            var location = new Point(32.8597, 39.9334) { SRID = 4326 };
+            var job = new Job(faultType, location, "Smell of gas", "LOCKCODE0001", now);
+
+            setupDb.Jobs.Add(job);
+            await setupDb.SaveChangesAsync();
+            jobId = job.Id;
+        }
+
+        await using var firstDb = _fixture.CreateDbContext();
+        await using var secondDb = _fixture.CreateDbContext();
+
+        var firstCopy = await firstDb.Jobs.SingleAsync(j => j.Id == jobId);
+        var secondCopy = await secondDb.Jobs.SingleAsync(j => j.Id == jobId);
+
+        firstCopy.TransitionTo(JobStatus.Offered, now.AddMinutes(1));
+        await firstDb.SaveChangesAsync();
+
+        secondCopy.TransitionTo(JobStatus.Cancelled, now.AddMinutes(2));
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => secondDb.SaveChangesAsync());
+    }
 }
