@@ -263,6 +263,48 @@ public class ReportsApiTests : IAsyncLifetime
         Assert.DoesNotContain("latitude", getBody, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("longitude", getBody, StringComparison.OrdinalIgnoreCase);
     }
+    [Fact]
+    public async Task GetReport_WithMultipleHistoryRows_ReturnsAllInOrder()
+    {
+        var client = _factory.CreateClient();
+        var created = await CreateReportAsync(client);
 
+        var start = DateTimeOffset.UtcNow;
+        JobStatus[] path =
+        [
+            JobStatus.Offered,
+            JobStatus.Queued,
+            JobStatus.Offered,
+            JobStatus.OnRoute,
+            JobStatus.OnSite
+        ];
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var job = await db.Jobs.SingleAsync(j => j.TrackingCode == created.TrackingCode);
+
+            for (var i = 0; i < path.Length; i++)
+            {
+                var history = job.TransitionTo(path[i], start.AddMinutes(i + 1));
+                db.JobStatusHistories.Add(history);
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/reports/{created.TrackingCode}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<ReportStatusResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("OnSite", body.Status);
+
+        string[] expectedStatuses = ["Queued", "Offered", "Queued", "Offered", "OnRoute", "OnSite"];
+        Assert.Equal(expectedStatuses, body.History.Select(h => h.Status).ToArray());
+
+        var times = body.History.Select(h => h.ChangedAt).ToList();
+        Assert.Equal(times.OrderBy(t => t).ToList(), times);
+    }
 
 }
