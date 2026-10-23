@@ -71,7 +71,7 @@ public class ReportService
     }
 
     public async Task<ReportStatusResponse?> GetStatusAsync(
-       string? trackingCode, CancellationToken cancellationToken)
+    string? trackingCode, CancellationToken cancellationToken)
     {
         var normalized = TrackingCodeNormalizer.Normalize(trackingCode);
         if (normalized is null)
@@ -84,12 +84,17 @@ public class ReportService
             .Where(j => j.TrackingCode == normalized)
             .Select(j => new
             {
-                j.Id,
                 j.TrackingCode,
                 j.Status,
                 FaultTypeName = j.FaultType.Name,
                 j.Description,
-                j.CreatedAt
+                j.CreatedAt,
+                History = _db.JobStatusHistories
+                    .Where(h => h.JobId == j.Id)
+                    .OrderBy(h => h.ChangedAt)
+                    .ThenBy(h => h.Id)
+                    .Select(h => new { h.NewStatus, h.ChangedAt })
+                    .ToList()
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -98,18 +103,9 @@ public class ReportService
             return null;
         }
 
-        var history = await _db.JobStatusHistories
-        .AsNoTracking()
-        .Where(h => h.JobId == job.Id)
-        .OrderBy(h => h.ChangedAt)
-        .ThenBy(h => h.Id)
-        .Select(h => new { h.NewStatus, h.ChangedAt })
-        .ToListAsync(cancellationToken);
-
-
-        var historyItems = history
-        .Select(h => new ReportHistoryItem(h.NewStatus.ToString(), h.ChangedAt))
-        .ToList();
+        var historyItems = job.History
+            .Select(h => new ReportHistoryItem(h.NewStatus.ToString(), h.ChangedAt))
+            .ToList();
 
         return new ReportStatusResponse(
             job.TrackingCode,
