@@ -21,7 +21,7 @@ public sealed class PostgisFixture : IAsyncLifetime
     {
         await _container.DisposeAsync();
     }
-
+    public string ConnectionString => _container.GetConnectionString();
     public AppDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
