@@ -61,8 +61,8 @@ public class ReportService
             }
             catch (DbUpdateException ex) when (IsTrackingCodeCollision(ex))
             {
-                _db.Entry(job).State = EntityState.Detached;
                 _db.Entry(history).State = EntityState.Detached;
+                _db.Entry(job).State = EntityState.Detached;
             }
         }
 
