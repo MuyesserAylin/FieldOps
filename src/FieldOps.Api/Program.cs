@@ -1,4 +1,5 @@
 using FieldOps.Api.Data;
+using FieldOps.Api.Jobs;
 using FieldOps.Api.Reports;
 using FieldOps.Api.Time;
 using FieldOps.Api.Tracking;
@@ -18,6 +19,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton<ITrackingCodeGenerator, TrackingCodeGenerator>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<JobStatusService>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
