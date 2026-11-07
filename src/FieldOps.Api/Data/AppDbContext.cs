@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<FaultType> FaultTypes => Set<FaultType>();
     public DbSet<Job> Jobs => Set<Job>();
     public DbSet<JobStatusHistory> JobStatusHistories => Set<JobStatusHistory>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,16 +60,25 @@ public class AppDbContext : DbContext
         });
 
         modelBuilder.Entity<Skill>().HasData(
-    new Skill { Id = 1, Name = "Gas" },
-    new Skill { Id = 2, Name = "Plumbing" },
-    new Skill { Id = 3, Name = "Electrical" },
-    new Skill { Id = 4, Name = "RoadWork" });
+            new Skill { Id = 1, Name = "Gas" },
+            new Skill { Id = 2, Name = "Plumbing" },
+            new Skill { Id = 3, Name = "Electrical" },
+            new Skill { Id = 4, Name = "RoadWork" });
 
         modelBuilder.Entity<FaultType>().HasData(
-            new FaultType { Id = 1, Name = "Gas leak", RequiredSkillId = 1, EstimatedDurationMinutes = 90, DefaultUrgency = Urgency.Critical },
-            new FaultType { Id = 2, Name = "Burst water pipe", RequiredSkillId = 2, EstimatedDurationMinutes = 120, DefaultUrgency = Urgency.High },
-            new FaultType { Id = 3, Name = "Power outage", RequiredSkillId = 3, EstimatedDurationMinutes = 90, DefaultUrgency = Urgency.High },
-            new FaultType { Id = 4, Name = "Pothole", RequiredSkillId = 4, EstimatedDurationMinutes = 60, DefaultUrgency = Urgency.Medium },
-            new FaultType { Id = 5, Name = "Street light failure", RequiredSkillId = 3, EstimatedDurationMinutes = 30, DefaultUrgency = Urgency.Low });
+             new FaultType { Id = 1, Name = "Gas leak", RequiredSkillId = 1, EstimatedDurationMinutes = 90, DefaultUrgency = Urgency.Critical },
+             new FaultType { Id = 2, Name = "Burst water pipe", RequiredSkillId = 2, EstimatedDurationMinutes = 120, DefaultUrgency = Urgency.High },
+             new FaultType { Id = 3, Name = "Power outage", RequiredSkillId = 3, EstimatedDurationMinutes = 90, DefaultUrgency = Urgency.High },
+             new FaultType { Id = 4, Name = "Pothole", RequiredSkillId = 4, EstimatedDurationMinutes = 60, DefaultUrgency = Urgency.Medium },
+             new FaultType { Id = 5, Name = "Street light failure", RequiredSkillId = 3, EstimatedDurationMinutes = 30, DefaultUrgency = Urgency.Low });
+
+        modelBuilder.Entity<User>(e =>
+        {
+            e.Property(x => x.UserName).HasMaxLength(50);
+            e.HasIndex(x => x.UserName).IsUnique();
+            e.Property(x => x.PasswordHash).HasMaxLength(200);
+            e.Property(x => x.Role).HasConversion<string>().HasMaxLength(20);
+        });
     }
+
 }
