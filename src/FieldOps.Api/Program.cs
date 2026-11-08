@@ -4,6 +4,7 @@ using FieldOps.Api.Jobs;
 using FieldOps.Api.Reports;
 using FieldOps.Api.Time;
 using FieldOps.Api.Tracking;
+using FieldOps.Api.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -29,6 +30,8 @@ builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserSeeder>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<OperatorJobService>();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
