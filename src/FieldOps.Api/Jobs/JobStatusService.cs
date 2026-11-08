@@ -38,7 +38,7 @@ public sealed class JobStatusService
         }
         catch (InvalidJobTransitionException)
         {
-            return JobStatusChangeResult.InvalidTransition();
+            return JobStatusChangeResult.InvalidTransition(oldStatus, newStatus);
         }
 
         _db.JobStatusHistories.Add(history);

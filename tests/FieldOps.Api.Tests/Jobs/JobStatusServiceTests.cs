@@ -125,6 +125,8 @@ public class JobStatusServiceTests : IAsyncLifetime
         var result = await ChangeAsync(jobId, JobStatus.Completed);
 
         Assert.Equal(JobStatusChangeOutcome.InvalidTransition, result.Outcome);
+        Assert.Equal(JobStatus.Queued, result.OldStatus);
+        Assert.Equal(JobStatus.Completed, result.NewStatus);
 
         await using var checkDb = _fixture.CreateDbContext();
         var job = await checkDb.Jobs.SingleAsync(j => j.Id == jobId);
@@ -145,6 +147,8 @@ public class JobStatusServiceTests : IAsyncLifetime
         var result = await ChangeAsync(jobId, JobStatus.Queued);
 
         Assert.Equal(JobStatusChangeOutcome.InvalidTransition, result.Outcome);
+        Assert.Equal(JobStatus.Completed, result.OldStatus);
+        Assert.Equal(JobStatus.Queued, result.NewStatus);
 
         await using var checkDb = _fixture.CreateDbContext();
         var job = await checkDb.Jobs.SingleAsync(j => j.Id == jobId);

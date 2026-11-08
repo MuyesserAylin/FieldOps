@@ -21,8 +21,8 @@ public sealed record JobStatusChangeResult(
     public static JobStatusChangeResult NotFound()
     => new(JobStatusChangeOutcome.NotFound);
 
-    public static JobStatusChangeResult InvalidTransition()
-      => new(JobStatusChangeOutcome.InvalidTransition);
+    public static JobStatusChangeResult InvalidTransition(JobStatus oldStatus, JobStatus newStatus)
+      => new(JobStatusChangeOutcome.InvalidTransition, oldStatus, newStatus);
 
     public static JobStatusChangeResult ConcurrencyConflict()
     => new(JobStatusChangeOutcome.ConcurrencyConflict);
