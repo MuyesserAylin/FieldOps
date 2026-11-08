@@ -1,7 +1,5 @@
-using System;
 using FieldOps.Api.Domain;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace FieldOps.Api.Auth;
 
@@ -15,9 +13,9 @@ public sealed class PasswordService
         return _hasher.HashPassword(null!, password);
     }
 
-    public bool Verify(string passwordHasher, string password)
+    public bool Verify(string passwordHash, string password)
     {
-        var result = _hasher.VerifyHashedPassword(null!, passwordHasher, password);
+        var result = _hasher.VerifyHashedPassword(null!, passwordHash, password);
         return result != PasswordVerificationResult.Failed;
     }
 }

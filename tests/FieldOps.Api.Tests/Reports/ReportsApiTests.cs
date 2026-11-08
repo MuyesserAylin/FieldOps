@@ -306,5 +306,47 @@ public class ReportsApiTests : IAsyncLifetime
         var times = body.History.Select(h => h.ChangedAt).ToList();
         Assert.Equal(times.OrderBy(t => t).ToList(), times);
     }
+    [Fact]
+    public async Task PostReport_WhenEveryAttemptCollides_Returns500WithoutLeakingDetails()
+    {
+        var now = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+
+        await using (var seedDb = _fixture.CreateDbContext())
+        {
+            var faultType = await seedDb.FaultTypes.SingleAsync(f => f.Id == 1);
+            var location = new Point(32.8597, 39.9334) { SRID = 4326 };
+
+            seedDb.Jobs.Add(new Job(faultType, location, "Existing report", "AAAAAAAAAAAA", now));
+            await seedDb.SaveChangesAsync();
+        }
+
+        var fakeGenerator = new SequenceTrackingCodeGenerator(
+            "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA");
+        await using var factory = new FieldOpsApiFactory(_fixture.ConnectionString, fakeGenerator);
+        var client = factory.CreateClient();
+
+        var request = new
+        {
+            faultTypeId = 1,
+            latitude = 39.9334,
+            longitude = 32.8597,
+            description = "Smell of gas"
+        };
+
+        var response = await client.PostAsJsonAsync("/api/reports", request);
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("tracking code", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("InvalidOperationException", body);
+        Assert.DoesNotContain("FieldOps.Api", body);
+        Assert.DoesNotContain("stack", body, StringComparison.OrdinalIgnoreCase);
+
+        await using var db = _fixture.CreateDbContext();
+        Assert.Equal(1, await db.Jobs.CountAsync());
+        Assert.Equal(0, await db.JobStatusHistories.CountAsync());
+    }
 
 }
