@@ -22,4 +22,4 @@ public class OperatorStatusPolicyTests
     {
         Assert.Contains("Cancelled", OperatorStatusPolicy.Message);
     }
-}
+} 

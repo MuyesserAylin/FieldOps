@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - FieldOps</title>
+    <style>
+            :root {
+                --accent: #1a5fb4;
+                --bg: #f6f7f9;
+                --border: #d5d9e0;
+            }
+
+            body {
+                font-family: system-ui, "Segoe UI", sans-serif;
+                background: var(--bg);
+                color: #1f2328;
+                margin: 0;
+                line-height: 1.5;
+            }
+
+            header {
+                background: var(--accent);
+            }
+
+            header .bar {
+                max-width: 720px;
+                margin: 0 auto;
+                padding: 0.8rem 1rem;
+            }
+
+            header a {
+                color: #fff;
+                font-weight: 600;
+                font-size: 1.1rem;
+                text-decoration: none;
+            }
+
+            main {
+                max-width: 720px;
+                margin: 1.5rem auto;
+                padding: 0 1rem;
+            }
+
+            .card {
+                background: #fff;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.25rem;
+            }
+
+            label {
+                display: block;
+                font-weight: 600;
+                margin-top: 0.9rem;
+            }
+
+            input,
+            select,
+            textarea {
+                width: 100%;
+                padding: 0.55rem;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                font: inherit;
+                box-sizing: border-box;
+            }
+
+            button,
+            .button {
+                background: var(--accent);
+                color: #fff;
+                border: 0;
+                border-radius: 6px;
+                padding: 0.6rem 1.1rem;
+                font: inherit;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 1rem;
+                text-decoration: none;
+                display: inline-block;
+            }
+
+            .error {
+                color: #b42318;
+            }
+
+            .success {
+                border-color: #2e7d32;
+                margin-bottom: 1rem;
+            }
+
+            .code {
+                font-family: monospace;
+                font-size: 1.3rem;
+                letter-spacing: 0.1em;
+            }
+    </style>
+    @await RenderSectionAsync("Head", required: false)
+</head>
+
+<body>
+    <header>
+        <div class="bar"><a href="/">FieldOps</a></div>
+    </header>
+    <main>
+        @RenderBody()
+    </main>
+
+</body> @await RenderSectionAsync("Scripts", required: false)
+
+</html>
