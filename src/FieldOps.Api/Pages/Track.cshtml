@@ -1,0 +1,41 @@
+@page
+@using FieldOps.Api.Reports
+@model TrackModel
+@{
+    ViewData["Title"] = "Bildirim takibi";
+}
+
+<div class="card">
+    <h1>Bildirim takibi</h1>
+    <form method="get">
+        <label for="code">Takip kodu</label>
+        <input id="code" name="code" type="text" value="@Model.Code" maxlength="32" />
+        <button type="submit">Sorgula</button>
+    </form>
+</div>
+
+@if (Model.IsNotFound)
+{
+    <div class="card">
+        <div class="error">Bu kodla bir bildirim bulunamadı. Kodu kontrol edip tekrar deneyin.</div>
+    </div>
+}
+
+@if (Model.Report is not null)
+{
+    var report = Model.Report;
+    <div class="card">
+        <h2>@StatusLabels.For(report.Status.ToString()!)</h2>
+        <p><strong>Arıza türü:</strong> @FaultTypeLabels.For(report.FaultType.ToString()!)</p>
+        <p><strong>Açıklama:</strong> @report.Description</p>
+        <p><strong>Takip kodu:</strong> <span class="code">@report.TrackingCode</span></p>
+
+        <h3>Geçmiş</h3>
+        <ul>
+            @foreach (var item in report.History)
+            {
+                <li>@item.ChangedAt.ToString("dd.MM.yyyy HH:mm") (UTC) — @StatusLabels.For(item.Status.ToString()!)</li>
+            }
+        </ul>
+    </div>
+}

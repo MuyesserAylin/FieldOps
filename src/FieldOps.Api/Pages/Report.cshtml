@@ -1,0 +1,113 @@
+@page
+@model ReportModel
+@{
+    ViewData["Title"] = "Arıza bildir";
+}
+
+@if (Model.CreatedCode is not null)
+{
+    <div class="card success">
+        <h2>Bildiriminiz alındı</h2>
+        <p>Takip kodunuz: <strong class="code">@Model.CreatedCode</strong></p>
+        <p>Bu kodu saklayın. Bildiriminizin durumunu bu kodla takip edebilirsiniz.</p>
+        <p><a href="/Track?code=@Model.CreatedCode">Bildirimi takip et</a></p>
+    </div>
+}
+
+<div class="card">
+    <h1>Arıza bildir</h1>
+    <form method="post">
+        <label for="Input_FaultTypeId">Arıza türü</label>
+        <select asp-for="Input.FaultTypeId">
+            <option value="">Seçin...</option>
+            @foreach (var option in Model.FaultTypes)
+            {
+                <option value="@option.Id">@option.Label</option>
+            }
+        </select>
+        @if (Model.Errors.TryGetValue("faultTypeId", out var faultTypeError))
+        {
+            <div class="error">@faultTypeError</div>
+        }
+        <label>Konum (haritada arızanın yerine tıklayın)</label>
+        <div id="map"
+             data-center-lat="@ServiceArea.CenterLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+             data-center-lon="@ServiceArea.CenterLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+             data-min-lat="@ServiceArea.MinLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+             data-max-lat="@ServiceArea.MaxLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+             data-min-lon="@ServiceArea.MinLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+             data-max-lon="@ServiceArea.MaxLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"></div>
+        <label for="Input_Latitude">Enlem</label>
+        <input asp-for="Input.Latitude" type="number" step="any" placeholder="örn. 39.7767" />
+        @if (Model.Errors.TryGetValue("latitude", out var latitudeError))
+        {
+            <div class="error">@latitudeError</div>
+        }
+
+        <label for="Input_Longitude">Boylam</label>
+        <input asp-for="Input.Longitude" type="number" step="any" placeholder="örn. 30.5206" />
+        @if (Model.Errors.TryGetValue("longitude", out var longitudeError))
+        {
+            <div class="error">@longitudeError</div>
+        }
+
+        <label for="Input_Description">Açıklama</label>
+        <textarea asp-for="Input.Description" rows="4"></textarea>
+        @if (Model.Errors.TryGetValue("description", out var descriptionError))
+        {
+            <div class="error">@descriptionError</div>
+        }
+
+        <button type="submit">Bildir</button>
+    </form>
+</div>
+@section Head {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 320px;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        (function () {
+            var latInput = document.getElementById("Input_Latitude");
+            var lonInput = document.getElementById("Input_Longitude");
+            var mapDiv = document.getElementById("map");
+            if (!mapDiv || typeof L === "undefined") { return; }
+
+            var bounds = L.latLngBounds(
+                [parseFloat(mapDiv.dataset.minLat), parseFloat(mapDiv.dataset.minLon)],
+                [parseFloat(mapDiv.dataset.maxLat), parseFloat(mapDiv.dataset.maxLon)]);
+
+            var map = L.map("map", { maxBounds: bounds, minZoom: 11 })
+                .setView([parseFloat(mapDiv.dataset.centerLat), parseFloat(mapDiv.dataset.centerLon)], 13);
+
+            L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+                attribution: "&copy; OpenStreetMap katkıda bulunanlar"
+            }).addTo(map);
+
+            var marker = null;
+            function place(lat, lon) {
+                if (marker) { marker.setLatLng([lat, lon]); }
+                else { marker = L.marker([lat, lon]).addTo(map); }
+            }
+
+            map.on("click", function (e) {
+                latInput.value = e.latlng.lat.toFixed(6);
+                lonInput.value = e.latlng.lng.toFixed(6);
+                place(e.latlng.lat, e.latlng.lng);
+            });
+
+            var lat = parseFloat(latInput.value);
+            var lon = parseFloat(lonInput.value);
+            if (!isNaN(lat) && !isNaN(lon)) { place(lat, lon); }
+        })();
+    </script>
+}

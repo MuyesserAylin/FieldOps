@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
            .UseSnakeCaseNamingConvention());
 
 builder.Services.AddControllers();
+builder.Services.AddRazorPages();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton<ITrackingCodeGenerator, TrackingCodeGenerator>();
@@ -80,6 +81,10 @@ using (var scope = app.Services.CreateScope())
         .SeedAsync(CancellationToken.None);
 }
 app.UseExceptionHandler();
+app.UseRequestLocalization(new RequestLocalizationOptions()
+    .SetDefaultCulture("en-US")
+    .AddSupportedCultures("en-US")
+    .AddSupportedUICultures("en-US"));
 
 if (app.Environment.IsDevelopment())
 {
@@ -93,6 +98,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapRazorPages();
 
 app.Run();
 public partial class Program { }
