@@ -1,0 +1,133 @@
+@page
+@using System.Globalization
+@using FieldOps.Api.Domain
+@using FieldOps.Api.Reports
+@model OperatorModel
+@{
+    ViewData["Title"] = "Operatör paneli";
+    var inv = CultureInfo.InvariantCulture;
+}
+
+@section Head {
+    <style>
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 0.4rem 0.5rem;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        button.danger {
+            background: #c62828;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+    </style>
+}
+
+<div class="card">
+    <div class="toolbar">
+        <div>
+            <h1>Operatör paneli</h1>
+            <p>Hoş geldiniz, <strong>@Model.UserName</strong> (@Model.Role)</p>
+        </div>
+        <form method="post" asp-page-handler="Logout">
+            <button type="submit">Çıkış yap</button>
+        </form>
+    </div>
+</div>
+
+@if (Model.SuccessMessage is not null)
+{
+    <div class="card success">@Model.SuccessMessage</div>
+}
+
+@if (Model.ErrorMessage is not null)
+{
+    <div class="card">
+        <div class="error">@Model.ErrorMessage</div>
+    </div>
+}
+
+<div class="card">
+    <h2>İş listesi</h2>
+
+    <form method="get">
+        <label for="status">Duruma göre filtre</label>
+        <select id="status" name="status">
+            <option value="">Tümü</option>
+            @foreach (var name in Enum.GetNames<JobStatus>())
+            {
+                <option value="@name" selected="@(name == Model.SelectedStatus)">@StatusLabels.ForOperator(name)</option>
+            }
+        </select>
+        <button type="submit">Filtrele</button>
+    </form>
+
+    @if (Model.Jobs.Count == 0)
+    {
+        <p>Henüz iş yok.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Takip kodu</th>
+                        <th>Arıza türü</th>
+                        <th>Durum</th>
+                        <th>Aciliyet</th>
+                        <th>Açıklama</th>
+                        <th>Konum</th>
+                        <th>Oluşturulma (UTC)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var job in Model.Jobs)
+                    {
+                        <tr>
+                            <td>@job.Id</td>
+                            <td><a href="/Track?code=@job.TrackingCode">@job.TrackingCode</a></td>
+                            <td>@FaultTypeLabels.For(job.FaultType)</td>
+                            <td>@StatusLabels.ForOperator(job.Status)</td>
+                            <td>@StatusLabels.ForUrgency(job.Urgency)</td>
+                            <td>@job.Description</td>
+                            <td>@job.Latitude.ToString("F5", inv), @job.Longitude.ToString("F5", inv)</td>
+                            <td>@job.CreatedAt.ToString("dd.MM.yyyy HH:mm", inv)</td>
+                            <td>
+                                @if (job.Status is not ("Completed" or "Cancelled"))
+                                {
+                                    <form method="post" asp-page-handler="Cancel"
+                                          onsubmit="return confirm('Bu işi iptal etmek istiyor musunuz?');">
+                                        <input type="hidden" name="id" value="@job.Id" />
+                                        <input type="hidden" name="status" value="@Model.SelectedStatus" />
+                                        <button type="submit" class="danger">İptal et</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

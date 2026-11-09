@@ -1,0 +1,22 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Giriş";
+}
+
+<div class="card">
+    <h1>Operatör girişi</h1>
+    @if (Model.ErrorMessage is not null)
+    {
+        <div class="error">@Model.ErrorMessage</div>
+    }
+    <form method="post">
+        <label for="Input_Username">Kullanıcı adı</label>
+        <input asp-for="Input.Username" autocomplete="username" />
+
+        <label for="Input_Password">Şifre</label>
+        <input asp-for="Input.Password" type="password" autocomplete="current-password" />
+
+        <button type="submit">Giriş yap</button>
+    </form>
+</div>
