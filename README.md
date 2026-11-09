@@ -238,6 +238,3 @@ Testler (Docker açık olmalı): `dotnet test`
 | 4 | Simülatör ve senaryolar; ölçüm altyapısı; en yakın ekip yöntemi; ilk deneme koşuları; eşzamanlılık testleri | Senaryolar çalışıyor, ilk karşılaştırma sonuçları var |
 | 5 | Tam deney koşuları (5 tekrar); ağırlık ayarı; performans testleri; tablo ve grafiklerin hazırlanması | Tüm deney sonuçları ve grafikler hazır |
 | 6 | Sonuçların değerlendirilmesi ve tartışma; hata düzeltme; rapor yazımı ve sunum hazırlığı. Zaman kalırsa 3. öncelikten bir özellik | Rapor, sunum ve tekrar üretilebilir deney paketi (2. öncelik tamam) |
-
-
-VV
