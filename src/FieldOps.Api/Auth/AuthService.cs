@@ -6,6 +6,8 @@ namespace FieldOps.Api.Auth;
 
 public sealed record LoginResult(string AccessToken, DateTimeOffset ExpiresAt, string Role);
 
+public sealed record AuthenticatedUser(int Id, string UserName, UserRole Role);
+
 public sealed class AuthService
 {
     private static readonly string DummyHash =
@@ -22,7 +24,29 @@ public sealed class AuthService
         _tokens = tokens;
     }
 
+    // API girişi: JWT bileti üretir.
     public async Task<LoginResult?> LoginAsync(
+        string username, string password, CancellationToken cancellationToken)
+    {
+        var user = await FindValidUserAsync(username, password, cancellationToken);
+        if (user is null)
+        {
+            return null;
+        }
+
+        var token = _tokens.CreateToken(user);
+        return new LoginResult(token.Value, token.ExpiresAt, user.Role.ToString());
+    }
+
+    // Sayfa girişi: sadece kimliği doğrular, çerezi sayfa kendisi verir.
+    public async Task<AuthenticatedUser?> VerifyAsync(
+        string username, string password, CancellationToken cancellationToken)
+    {
+        var user = await FindValidUserAsync(username, password, cancellationToken);
+        return user is null ? null : new AuthenticatedUser(user.Id, user.UserName, user.Role);
+    }
+
+    private async Task<User?> FindValidUserAsync(
         string username, string password, CancellationToken cancellationToken)
     {
         var normalized = User.NormalizeUserName(username);
@@ -43,7 +67,6 @@ public sealed class AuthService
             return null;
         }
 
-        var token = _tokens.CreateToken(user);
-        return new LoginResult(token.Value, token.ExpiresAt, user.Role.ToString());
+        return user;
     }
 }
