@@ -210,6 +210,39 @@ namespace FieldOps.Api.Migrations
                     b.ToTable("job_status_histories", (string)null);
                 });
 
+            modelBuilder.Entity("FieldOps.Api.Domain.Shift", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<int>("TeamId")
+                        .HasColumnType("integer")
+                        .HasColumnName("team_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_shifts");
+
+                    b.HasIndex("TeamId", "StartsAt")
+                        .HasDatabaseName("ix_shifts_team_id_starts_at");
+
+                    b.ToTable("shifts", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_shifts_ends_after_starts", "ends_at > starts_at");
+                        });
+                });
+
             modelBuilder.Entity("FieldOps.Api.Domain.Skill", b =>
                 {
                     b.Property<int>("Id")
@@ -254,6 +287,76 @@ namespace FieldOps.Api.Migrations
                         {
                             Id = 4,
                             Name = "RoadWork"
+                        });
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.Team", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("CooldownUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cooldown_until");
+
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geography (point, 4326)")
+                        .HasColumnName("location");
+
+                    b.Property<DateTimeOffset>("LocationUpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("location_updated_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_teams");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_teams_name");
+
+                    b.ToTable("teams", (string)null);
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.TeamSkill", b =>
+                {
+                    b.Property<int>("TeamId")
+                        .HasColumnType("integer")
+                        .HasColumnName("team_id");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("integer")
+                        .HasColumnName("skill_id");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer")
+                        .HasColumnName("level");
+
+                    b.HasKey("TeamId", "SkillId")
+                        .HasName("pk_team_skills");
+
+                    b.HasIndex("SkillId")
+                        .HasDatabaseName("ix_team_skills_skill_id");
+
+                    b.ToTable("team_skills", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_team_skills_level", "level BETWEEN 1 AND 3");
                         });
                 });
 
@@ -336,6 +439,46 @@ namespace FieldOps.Api.Migrations
                         .HasConstraintName("fk_job_status_histories_jobs_job_id");
 
                     b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.Shift", b =>
+                {
+                    b.HasOne("FieldOps.Api.Domain.Team", "Team")
+                        .WithMany("Shifts")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_shifts_teams_team_id");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.TeamSkill", b =>
+                {
+                    b.HasOne("FieldOps.Api.Domain.Skill", "Skill")
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_team_skills_skills_skill_id");
+
+                    b.HasOne("FieldOps.Api.Domain.Team", "Team")
+                        .WithMany("Skills")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_team_skills_teams_team_id");
+
+                    b.Navigation("Skill");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.Team", b =>
+                {
+                    b.Navigation("Shifts");
+
+                    b.Navigation("Skills");
                 });
 #pragma warning restore 612, 618
         }

@@ -14,6 +14,9 @@ public class AppDbContext : DbContext
     public DbSet<Job> Jobs => Set<Job>();
     public DbSet<JobStatusHistory> JobStatusHistories => Set<JobStatusHistory>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Team> Teams => Set<Team>();
+    public DbSet<TeamSkill> TeamSkills => Set<TeamSkill>();
+    public DbSet<Shift> Shifts => Set<Shift>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,6 +81,44 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.UserName).IsUnique();
             e.Property(x => x.PasswordHash).HasMaxLength(200);
             e.Property(x => x.Role).HasConversion<string>().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<Team>(e =>
+{
+    e.Property(x => x.Name).IsRequired().HasMaxLength(100);
+    e.HasIndex(x => x.Name).IsUnique();
+    e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+    e.Property(x => x.Location).HasColumnType("geography (point, 4326)").IsRequired();
+    e.Property(x => x.LocationUpdatedAt).IsRequired();
+    // CooldownUntil boş olabilir (nullable), ek ayar gerekmez
+
+    // Listeler private alanda (_skills, _shifts) tutuluyor; EF doğrudan alana yazsın
+    e.Navigation(x => x.Skills).UsePropertyAccessMode(PropertyAccessMode.Field);
+    e.Navigation(x => x.Shifts).UsePropertyAccessMode(PropertyAccessMode.Field);
+});
+
+        modelBuilder.Entity<TeamSkill>(e =>
+        {
+            e.HasKey(x => new { x.TeamId, x.SkillId });
+            e.HasOne(x => x.Team)
+                .WithMany(t => t.Skills)
+                .HasForeignKey(x => x.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Skill)
+                .WithMany()
+                .HasForeignKey(x => x.SkillId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.ToTable(t => t.HasCheckConstraint("ck_team_skills_level", "level BETWEEN 1 AND 3"));
+        });
+
+        modelBuilder.Entity<Shift>(e =>
+        {
+            e.HasOne(x => x.Team)
+                .WithMany(t => t.Shifts)
+                .HasForeignKey(x => x.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.ToTable(t => t.HasCheckConstraint("ck_shifts_ends_after_starts", "ends_at > starts_at"));
+            e.HasIndex(x => new { x.TeamId, x.StartsAt });
         });
     }
 
