@@ -36,6 +36,6 @@ public sealed class PostgisFixture : IAsyncLifetime
     {
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE TABLE jobs, job_status_histories, users RESTART IDENTITY CASCADE;");
+           "TRUNCATE TABLE jobs, job_status_histories, users, teams, team_skills, shifts RESTART IDENTITY CASCADE;");
     }
 }
