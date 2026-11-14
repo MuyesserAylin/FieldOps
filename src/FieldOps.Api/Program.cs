@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using FieldOps.Api.Teams;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,7 @@ builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserSeeder>();
+builder.Services.AddScoped<DemoTeamSeeder>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OperatorJobService>();
 builder.Services
@@ -86,12 +88,18 @@ builder.Services.AddAuthorization();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
 using (var scope = app.Services.CreateScope())
 {
     await scope.ServiceProvider.GetRequiredService<UserSeeder>()
         .SeedAsync(CancellationToken.None);
+
+    await scope.ServiceProvider.GetRequiredService<DemoTeamSeeder>()
+        .SeedAsync(CancellationToken.None);
 }
+
 app.UseExceptionHandler();
+
 app.UseRequestLocalization(new RequestLocalizationOptions()
     .SetDefaultCulture("en-US")
     .AddSupportedCultures("en-US")

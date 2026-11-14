@@ -27,6 +27,7 @@ public class FieldOpsApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("ConnectionStrings:Default", _connectionString);
         builder.UseSetting("Seed:AdminUsername", "");
         builder.UseSetting("Seed:AdminPassword", "");
+        builder.UseSetting("Seed:DemoTeams", "false");
         builder.UseSetting("Jwt:Key", TestJwtKey);
 
         if (_trackingCodeGenerator is not null)
