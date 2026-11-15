@@ -1,0 +1,11 @@
+@page
+@model TeamsModel
+@{
+    ViewData["Title"] = "Ekipler";
+}
+
+<div class="card">
+    <h1>Ekipler</h1>
+    <p><a href="/Operator">← Operatör paneline dön</a></p>
+    <p>Toplam ekip: @Model.Teams.Count</p>
+</div>
