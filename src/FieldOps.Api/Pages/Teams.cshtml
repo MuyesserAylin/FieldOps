@@ -1,0 +1,245 @@
+@page
+@using System.Globalization
+@using FieldOps.Api.Teams
+@model TeamsModel
+@{
+    ViewData["Title"] = "Ekipler";
+    var inv = CultureInfo.InvariantCulture;
+    var onShiftCount = Model.Teams.Count(t => t.OnShift);
+
+    // Haritadaki renklerle aynı.
+    string StatusColor(string status) => status switch
+    {
+        "Idle" => "#2e7d32",
+        "OfferPending" => "#ef6c00",
+        "OnRoute" or "OnSite" => "#1a5fb4",
+        _ => "#757575"
+    };
+}
+
+@section Head {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        main {
+            max-width: 1000px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .toolbar h1 {
+            margin: 0;
+        }
+
+        .toolbar .button {
+            margin-top: 0;
+        }
+
+        .summary {
+            color: #57606a;
+            margin: 0 0 1rem 0;
+        }
+
+        #map {
+            height: 480px;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 3px solid;
+            vertical-align: middle;
+            margin-right: 0.3rem;
+            box-sizing: border-box;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 0.5rem 0.6rem;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f0f2f5;
+        }
+
+        tbody tr:hover td {
+            background: #f6f8fa;
+        }
+
+        tr.off-shift td {
+            color: #6b7280;
+        }
+    </style>
+}
+
+<div class="card">
+    <div class="toolbar">
+        <h1>Ekipler</h1>
+        <a class="button" href="/Operator">← Operatör paneli</a>
+    </div>
+
+    @if (Model.Teams.Count == 0)
+    {
+        <p>Henüz ekip yok.</p>
+    }
+    else
+    {
+        <p class="summary">@Model.Teams.Count ekip, @onShiftCount tanesi şu an vardiyada.</p>
+
+        <div id="map" data-teams="@Model.TeamsJson" data-center-lat="@ServiceArea.CenterLatitude.ToString(inv)"
+             data-center-lon="@ServiceArea.CenterLongitude.ToString(inv)"
+             data-min-lat="@ServiceArea.MinLatitude.ToString(inv)" data-max-lat="@ServiceArea.MaxLatitude.ToString(inv)"
+             data-min-lon="@ServiceArea.MinLongitude.ToString(inv)" data-max-lon="@ServiceArea.MaxLongitude.ToString(inv)">
+        </div>
+
+        <div class="legend">
+            <span><span class="dot" style="border-color:#2e7d32;background:#2e7d32"></span>Boşta</span>
+            <span><span class="dot" style="border-color:#ef6c00;background:#ef6c00"></span>Teklif bekliyor</span>
+            <span><span class="dot" style="border-color:#1a5fb4;background:#1a5fb4"></span>Yolda / İşte</span>
+            <span><span class="dot" style="border-color:#757575;background:#757575"></span>Çevrimdışı</span>
+            <span><span class="dot" style="border-color:#757575;background:transparent"></span>İçi boş: şu an vardiyada
+                değil</span>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Durum</th>
+                            <th>Şu an vardiyada</th>
+                            <th>Beceri</th>
+                            <th>Seviye</th>
+                            <th>Konum</th>
+                            <th>Konum zamanı (UTC)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var team in Model.Teams)
+                        {
+                            var color = StatusColor(team.Status);
+                            <tr class="@(team.OnShift ? "" : "off-shift")">
+                                <td>@team.Name</td>
+                                <td>
+                                    <span class="dot"
+                                          style="border-color:@color;background:@color"></span>@TeamStatusLabels.Get(team.Status)
+                                </td>
+                                <td>@(team.OnShift ? "Evet" : "Hayır")</td>
+                                <td>
+                                    @foreach (var skill in team.Skills)
+                                    {
+                                        <div>@SkillLabels.Get(skill.Name)</div>
+                                    }
+                                </td>
+                                <td>
+                                    @foreach (var skill in team.Skills)
+                                    {
+                                        <div>@SkillLevelLabels.Get(skill.Level)</div>
+                                    }
+                                </td>
+                                <td>@team.Latitude.ToString("F5", inv), @team.Longitude.ToString("F5", inv)</td>
+                                <td>@team.LocationUpdatedAt.UtcDateTime.ToString("dd.MM.yyyy HH:mm", inv)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    @section Scripts {
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+            (function () {
+                var mapDiv = document.getElementById("map");
+                if (!mapDiv || typeof L === "undefined") { return; }
+
+                var teams = JSON.parse(mapDiv.dataset.teams);
+
+                var colors = {
+                    Idle: "#2e7d32",
+                    OfferPending: "#ef6c00",
+                    OnRoute: "#1a5fb4",
+                    OnSite: "#1a5fb4",
+                    Offline: "#757575"
+                };
+
+                var bounds = L.latLngBounds(
+                    [parseFloat(mapDiv.dataset.minLat), parseFloat(mapDiv.dataset.minLon)],
+                    [parseFloat(mapDiv.dataset.maxLat), parseFloat(mapDiv.dataset.maxLon)]);
+
+                var map = L.map("map", { maxBounds: bounds, minZoom: 11 })
+                    .setView([parseFloat(mapDiv.dataset.centerLat), parseFloat(mapDiv.dataset.centerLon)], 12);
+
+                L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    maxZoom: 19,
+                    attribution: "&copy; OpenStreetMap katkıda bulunanlar"
+                }).addTo(map);
+
+                // Açılır pencere: metinler textContent ile eklenir, HTML olarak yorumlanmaz.
+                function buildPopup(team) {
+                    var box = document.createElement("div");
+
+                    var title = document.createElement("strong");
+                    title.textContent = team.name;
+                    box.appendChild(title);
+
+                    function addLine(label, value) {
+                        var line = document.createElement("div");
+                        var strong = document.createElement("strong");
+                        strong.textContent = label + ": ";
+                        line.appendChild(strong);
+                        line.appendChild(document.createTextNode(value));
+                        box.appendChild(line);
+                    }
+
+                    addLine("Durum", team.statusLabel);
+                    addLine("Vardiyada", team.onShift ? "Evet" : "Hayır");
+                    addLine("Beceriler", team.skills.join(", "));
+                    return box;
+                }
+
+                teams.forEach(function (team) {
+                    var color = colors[team.status] || "#757575";
+                    L.circleMarker([team.lat, team.lon], {
+                        radius: 9,
+                        color: color,
+                        weight: 3,
+                        opacity: team.onShift ? 1 : 0.6,
+                        fillColor: color,
+                        fillOpacity: team.onShift ? 0.85 : 0
+                    }).addTo(map).bindPopup(buildPopup(team));
+                });
+            })();
+        </script>
+    }
