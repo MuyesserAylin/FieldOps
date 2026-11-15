@@ -28,4 +28,14 @@ public class TeamLabelsTests
         Assert.Equal("Bilinmeyen", TeamStatusLabels.Get("Bilinmeyen"));
         Assert.Equal("Bilinmeyen", SkillLabels.Get("Bilinmeyen"));
     }
+    [Theory]
+    [InlineData(1, "Temel")]
+    [InlineData(2, "Orta")]
+    [InlineData(3, "Uzman")]
+    public void SkillLevel_known_values_return_turkish(int input, string expected)
+    => Assert.Equal(expected, SkillLevelLabels.Get(input));
+
+    [Fact]
+    public void SkillLevel_unknown_value_is_returned_as_number()
+        => Assert.Equal("7", SkillLevelLabels.Get(7));
 }
