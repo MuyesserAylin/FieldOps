@@ -23,7 +23,6 @@ public class TeamsModel : PageModel
 
     public IReadOnlyList<OperatorTeamItem> Teams { get; private set; } = [];
 
-    // Haritanın okuyacağı JSON. Sayfada data- özniteliğine konur (HTML-encode edilir).
     public string TeamsJson { get; private set; } = "[]";
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
