@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using FieldOps.Api.Teams;
+using FieldOps.Api.Assignment;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,10 @@ builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddOptions<AssignmentSettings>()
+    .Bind(builder.Configuration.GetSection("Assignment"))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<AssignmentSettings>, AssignmentSettingsValidator>();
 builder.Services.AddSingleton<ITrackingCodeGenerator, TrackingCodeGenerator>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<JobStatusService>();
