@@ -11,4 +11,7 @@ public static class ServiceArea
     public const double MaxLatitude = 39.844;
     public const double MinLongitude = 30.404;
     public const double MaxLongitude = 30.637;
+
+    public static double WidthKm =>
+        (MaxLongitude - MinLongitude) * 111.32 * Math.Cos(CenterLatitude * Math.PI / 180);
 }
