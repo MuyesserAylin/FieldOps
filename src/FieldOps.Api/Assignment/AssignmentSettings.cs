@@ -54,6 +54,7 @@ public sealed class AssignmentSettings
     public double LowDistanceLimitPercent { get; set; }     // başlangıç %20
 
     // Bu aciliyette aday olabilecek en uzak ekibin uzaklığı (km). 
+    //Bu ekibi aday yapalım mı
     public double? GetDistanceLimitKm(Urgency urgency) => urgency switch
     {
         Urgency.Critical => null,

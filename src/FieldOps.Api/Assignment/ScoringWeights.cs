@@ -1,7 +1,8 @@
 using System;
 
 namespace FieldOps.Api.Assignment;
-
+// Bir ağırlık seti: dört ölçütün puandaki payı.
+// Sayılar appsettings.json'dan gelir.
 public sealed class ScoringWeights
 {
     public double Distance { get; set; }
