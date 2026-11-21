@@ -15,7 +15,5 @@ public static class ServiceArea
     public static double WidthKm =>
         (MaxLongitude - MinLongitude) * 111.32 * Math.Cos(CenterLatitude * Math.PI / 180);
 
-
-    // Hizmet alanının kuzey-güney yüksekliği (km). 1 derece enlem yaklaşık 111,32 km'dir.
     public static double HeightKm => (MaxLatitude - MinLatitude) * 111.32;
 }
