@@ -15,6 +15,7 @@ internal static class TestSettings
         WorkloadCapacityRatio = 0.75,
         ResponseHistoryWindow = 10,
         ResponseMinOffers = 5,
+        UrgencyEscalationMinutes = 30,
         UrgentWeights = new ScoringWeights { Distance = 60, Workload = 5, Skill = 10, Response = 25 },
         NormalWeights = new ScoringWeights { Distance = 35, Workload = 40, Skill = 15, Response = 10 }
     };
