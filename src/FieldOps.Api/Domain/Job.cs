@@ -76,6 +76,29 @@ public class Job
         AssignedAt = null;
     }
 
+    public bool EscalateUrgency(Urgency newUrgency)
+    {
+        if (Status != JobStatus.Queued)
+        {
+            throw new InvalidOperationException(
+                $"Aciliyet yalnızca 'Kuyrukta' durumundaki işte yükseltilebilir (şu anki durum: {Status}).");
+        }
+
+        if (!Enum.IsDefined(newUrgency) || newUrgency > Urgency.High)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(newUrgency), newUrgency, "Aciliyet beklemeyle en fazla 'yüksek'e yükseltilebilir.");
+        }
+
+        if (newUrgency <= Urgency)
+        {
+            return false;
+        }
+
+        Urgency = newUrgency;
+        return true;
+    }
+
     public long Id { get; private set; }
     public int FaultTypeId { get; private set; }
     public FaultType FaultType { get; private set; } = null!;
