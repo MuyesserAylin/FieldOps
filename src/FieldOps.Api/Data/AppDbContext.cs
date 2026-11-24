@@ -17,6 +17,8 @@ public class AppDbContext : DbContext
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<TeamSkill> TeamSkills => Set<TeamSkill>();
     public DbSet<Shift> Shifts => Set<Shift>();
+    public DbSet<AssignmentDecision> AssignmentDecisions => Set<AssignmentDecision>();
+    public DbSet<AssignmentDecisionCandidate> AssignmentDecisionCandidates => Set<AssignmentDecisionCandidate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -95,16 +97,16 @@ public class AppDbContext : DbContext
         });
 
         modelBuilder.Entity<Team>(e =>
-{
-    e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-    e.HasIndex(x => x.Name).IsUnique();
-    e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
-    e.Property(x => x.Location).HasColumnType("geography (point, 4326)").IsRequired();
-    e.Property(x => x.LocationUpdatedAt).IsRequired();
+        {
+            e.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            e.HasIndex(x => x.Name).IsUnique();
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.Location).HasColumnType("geography (point, 4326)").IsRequired();
+            e.Property(x => x.LocationUpdatedAt).IsRequired();
 
-    e.Navigation(x => x.Skills).UsePropertyAccessMode(PropertyAccessMode.Field);
-    e.Navigation(x => x.Shifts).UsePropertyAccessMode(PropertyAccessMode.Field);
-});
+            e.Navigation(x => x.Skills).UsePropertyAccessMode(PropertyAccessMode.Field);
+            e.Navigation(x => x.Shifts).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
 
         modelBuilder.Entity<TeamSkill>(e =>
         {
@@ -128,6 +130,53 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
             e.ToTable(t => t.HasCheckConstraint("ck_shifts_ends_after_starts", "ends_at > starts_at"));
             e.HasIndex(x => new { x.TeamId, x.StartsAt });
+        });
+
+
+        modelBuilder.Entity<AssignmentDecision>(e =>
+        {
+            e.Property(x => x.WeightSet).HasConversion<string>().HasMaxLength(20);
+            e.HasOne(x => x.Job)
+                .WithMany()
+                .HasForeignKey(x => x.JobId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => new { x.JobId, x.DecidedAt });
+
+            e.Navigation(x => x.Candidates).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<AssignmentDecisionCandidate>(e =>
+        {
+            e.Property(x => x.EliminationReason).HasConversion<string>().HasMaxLength(30);
+
+            e.HasOne(x => x.Decision)
+                .WithMany(d => d.Candidates)
+                .HasForeignKey(x => x.DecisionId)
+                .HasConstraintName("fk_decision_candidates_decision")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Team)
+                .WithMany()
+                .HasForeignKey(x => x.TeamId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.DecisionId, x.TeamId }).IsUnique();
+
+            e.HasIndex(x => new { x.DecisionId, x.Rank }).IsUnique();
+
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "ck_assignment_decision_candidates_state",
+                    "(elimination_reason IS NOT NULL AND distance_score IS NULL AND workload_score IS NULL " +
+                    "AND skill_score IS NULL AND response_score IS NULL AND total_score IS NULL AND rank IS NULL) " +
+                    "OR (elimination_reason IS NULL AND distance_score IS NOT NULL AND workload_score IS NOT NULL " +
+                    "AND skill_score IS NOT NULL AND response_score IS NOT NULL AND total_score IS NOT NULL AND rank IS NOT NULL)");
+
+                t.HasCheckConstraint(
+                    "ck_assignment_decision_candidates_rank",
+                    "rank IS NULL OR rank >= 1");
+            });
         });
     }
 
