@@ -49,6 +49,17 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.FaultTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.AssignedTeam)
+                .WithMany()
+                .HasForeignKey(x => x.AssignedTeamId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.AssignedTeamId, x.AssignedAt });
+
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_jobs_assignment_pair",
+                "(assigned_team_id IS NULL) = (assigned_at IS NULL)"));
         });
 
         modelBuilder.Entity<JobStatusHistory>(e =>
@@ -90,9 +101,7 @@ public class AppDbContext : DbContext
     e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
     e.Property(x => x.Location).HasColumnType("geography (point, 4326)").IsRequired();
     e.Property(x => x.LocationUpdatedAt).IsRequired();
-    // CooldownUntil boş olabilir (nullable), ek ayar gerekmez
 
-    // Listeler private alanda (_skills, _shifts) tutuluyor; EF doğrudan alana yazsın
     e.Navigation(x => x.Skills).UsePropertyAccessMode(PropertyAccessMode.Field);
     e.Navigation(x => x.Shifts).UsePropertyAccessMode(PropertyAccessMode.Field);
 });
