@@ -115,6 +115,14 @@ namespace FieldOps.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<DateTimeOffset?>("AssignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_at");
+
+                    b.Property<int?>("AssignedTeamId")
+                        .HasColumnType("integer")
+                        .HasColumnName("assigned_team_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -170,7 +178,13 @@ namespace FieldOps.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_jobs_tracking_code");
 
-                    b.ToTable("jobs", (string)null);
+                    b.HasIndex("AssignedTeamId", "AssignedAt")
+                        .HasDatabaseName("ix_jobs_assigned_team_id_assigned_at");
+
+                    b.ToTable("jobs", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_jobs_assignment_pair", "(assigned_team_id IS NULL) = (assigned_at IS NULL)");
+                        });
                 });
 
             modelBuilder.Entity("FieldOps.Api.Domain.JobStatusHistory", b =>
@@ -419,12 +433,20 @@ namespace FieldOps.Api.Migrations
 
             modelBuilder.Entity("FieldOps.Api.Domain.Job", b =>
                 {
+                    b.HasOne("FieldOps.Api.Domain.Team", "AssignedTeam")
+                        .WithMany()
+                        .HasForeignKey("AssignedTeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_jobs_teams_assigned_team_id");
+
                     b.HasOne("FieldOps.Api.Domain.FaultType", "FaultType")
                         .WithMany()
                         .HasForeignKey("FaultTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_jobs_fault_types_fault_type_id");
+
+                    b.Navigation("AssignedTeam");
 
                     b.Navigation("FaultType");
                 });
