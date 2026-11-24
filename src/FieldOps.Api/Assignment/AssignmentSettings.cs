@@ -40,7 +40,7 @@ public sealed class AssignmentSettings
     };
 
     // Mesafe notundaki D (km). Kritikte eleme sınırı yok, o yüzden şehrin köşegeni;
-    // diğerlerinde eleme sınırı. Hiçbir mesafe D'den büyük olamaz, not eksiye düşmez.
+    // diğerlerinde D eleme sınırı. Hiçbir mesafe D'den büyük olamaz, not eksiye düşmez.
     public double GetDistanceReferenceKm(Urgency urgency) => urgency switch
     {
         Urgency.Critical => Math.Sqrt(CityWidthKm * CityWidthKm + CityHeightKm * CityHeightKm),
