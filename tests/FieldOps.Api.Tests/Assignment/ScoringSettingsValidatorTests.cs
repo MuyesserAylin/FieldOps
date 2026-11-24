@@ -103,4 +103,16 @@ public class ScoringSettingsValidatorTests
 
         Assert.True(Validate(settings).Succeeded);
     }
+
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-30)]
+    public void Urgency_escalation_minutes_must_be_above_0(int minutes)
+    {
+        var settings = TestSettings.Standard();
+        settings.UrgencyEscalationMinutes = minutes;
+
+        Assert.True(Validate(settings).Failed);
+    }
 }

@@ -79,6 +79,10 @@ public sealed class AssignmentSettingsValidator : IValidateOptions<AssignmentSet
             errors.Add("Assignment:ResponseMinOffers, ResponseHistoryWindow'dan büyük olamaz.");
         }
 
+        if (options.UrgencyEscalationMinutes <= 0)
+        {
+            errors.Add("Assignment:UrgencyEscalationMinutes 0'dan büyük olmalı.");
+        }
         return errors.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(errors);
