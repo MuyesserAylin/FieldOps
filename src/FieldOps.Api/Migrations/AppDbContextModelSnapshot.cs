@@ -24,6 +24,114 @@ namespace FieldOps.Api.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FieldOps.Api.Domain.AssignmentDecision", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("DecidedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("decided_at");
+
+                    b.Property<long>("JobId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("job_id");
+
+                    b.Property<int>("Urgency")
+                        .HasColumnType("integer")
+                        .HasColumnName("urgency");
+
+                    b.Property<string>("WeightSet")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("weight_set");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assignment_decisions");
+
+                    b.HasIndex("JobId", "DecidedAt")
+                        .HasDatabaseName("ix_assignment_decisions_job_id_decided_at");
+
+                    b.ToTable("assignment_decisions", (string)null);
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.AssignmentDecisionCandidate", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("DecisionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("decision_id");
+
+                    b.Property<double>("DistanceKm")
+                        .HasColumnType("double precision")
+                        .HasColumnName("distance_km");
+
+                    b.Property<double?>("DistanceScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("distance_score");
+
+                    b.Property<string>("EliminationReason")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("elimination_reason");
+
+                    b.Property<int?>("Rank")
+                        .HasColumnType("integer")
+                        .HasColumnName("rank");
+
+                    b.Property<double?>("ResponseScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("response_score");
+
+                    b.Property<double?>("SkillScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("skill_score");
+
+                    b.Property<int>("TeamId")
+                        .HasColumnType("integer")
+                        .HasColumnName("team_id");
+
+                    b.Property<double?>("TotalScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("total_score");
+
+                    b.Property<double?>("WorkloadScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("workload_score");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assignment_decision_candidates");
+
+                    b.HasIndex("TeamId")
+                        .HasDatabaseName("ix_assignment_decision_candidates_team_id");
+
+                    b.HasIndex("DecisionId", "Rank")
+                        .IsUnique()
+                        .HasDatabaseName("ix_assignment_decision_candidates_decision_id_rank");
+
+                    b.HasIndex("DecisionId", "TeamId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_assignment_decision_candidates_decision_id_team_id");
+
+                    b.ToTable("assignment_decision_candidates", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_assignment_decision_candidates_rank", "rank IS NULL OR rank >= 1");
+
+                            t.HasCheckConstraint("ck_assignment_decision_candidates_state", "(elimination_reason IS NOT NULL AND distance_score IS NULL AND workload_score IS NULL AND skill_score IS NULL AND response_score IS NULL AND total_score IS NULL AND rank IS NULL) OR (elimination_reason IS NULL AND distance_score IS NOT NULL AND workload_score IS NOT NULL AND skill_score IS NOT NULL AND response_score IS NOT NULL AND total_score IS NOT NULL AND rank IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("FieldOps.Api.Domain.FaultType", b =>
                 {
                     b.Property<int>("Id")
@@ -419,6 +527,39 @@ namespace FieldOps.Api.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("FieldOps.Api.Domain.AssignmentDecision", b =>
+                {
+                    b.HasOne("FieldOps.Api.Domain.Job", "Job")
+                        .WithMany()
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_decisions_jobs_job_id");
+
+                    b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.AssignmentDecisionCandidate", b =>
+                {
+                    b.HasOne("FieldOps.Api.Domain.AssignmentDecision", "Decision")
+                        .WithMany("Candidates")
+                        .HasForeignKey("DecisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_decision_candidates_decision");
+
+                    b.HasOne("FieldOps.Api.Domain.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_decision_candidates_teams_team_id");
+
+                    b.Navigation("Decision");
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("FieldOps.Api.Domain.FaultType", b =>
                 {
                     b.HasOne("FieldOps.Api.Domain.Skill", "RequiredSkill")
@@ -494,6 +635,11 @@ namespace FieldOps.Api.Migrations
                     b.Navigation("Skill");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("FieldOps.Api.Domain.AssignmentDecision", b =>
+                {
+                    b.Navigation("Candidates");
                 });
 
             modelBuilder.Entity("FieldOps.Api.Domain.Team", b =>
