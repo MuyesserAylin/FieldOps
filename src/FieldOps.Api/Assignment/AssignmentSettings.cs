@@ -26,10 +26,10 @@ public sealed class AssignmentSettings
     // Bundan az teklif almış ekibe tam not (100) verilir; yeni ekip haksız cezalanmasın. Başlangıç değeri: 5
     public int ResponseMinOffers { get; set; }
 
-
     // Kuyrukta bekleyen işin aciliyeti her bu kadar dakikada bir basamak yükselir (en fazla "yüksek").
     // Amaç: düşük öncelikli iş sonsuza kadar aç kalmasın. Başlangıç değeri: 30
     public int UrgencyEscalationMinutes { get; set; }
+
     // Ağırlık setleri. Sayılar appsettings.json'dan gelir.
     // Başlangıç değerleri: acil 60/5/10/25, normal 35/40/15/10
     public ScoringWeights UrgentWeights { get; set; } = new();
