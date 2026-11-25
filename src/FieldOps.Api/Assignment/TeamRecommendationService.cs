@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace FieldOps.Api.Assignment;
 
-// Bir iş için ekip ÖNERİR: yükleyici -> eleme -> puanlama -> karar günlüğü (ana belge 7).
+// Bir iş için ekip ÖNERİR: yükleyici -> eleme -> puanlama -> karar günlüğü 
 // Orkestra şefidir: kendisi hesap yapmaz, parçaları sırayla çağırır.
 // İşe ekip ATAMAZ; iş, ekip ya da başka hiçbir tablo değişmez. Sadece karar günlüğüne yazar.
 // Gerçek atama (teklif, kabul) Ay 3'te gelecek.
@@ -38,7 +38,6 @@ public sealed class TeamRecommendationService
 
     public async Task<RecommendationResult> RecommendAsync(long jobId, CancellationToken cancellationToken)
     {
-        // "Şimdi" bir kez alınır; yükleyiciler, eleme ve karar kaydı aynı anı kullanır.
         var now = _clock.UtcNow;
 
         // 1) İşi yükle
@@ -48,21 +47,17 @@ public sealed class TeamRecommendationService
             return new RecommendationResult(RecommendationOutcome.JobNotFound, null, 0, 0);
         }
 
-        // Sadece kuyruktaki iş için öneri yapılır; karar yazılmaz.
         if (job.Status != JobStatus.Queued)
         {
             return new RecommendationResult(RecommendationOutcome.JobNotQueued, null, 0, 0);
         }
 
-        // 2) Ekip fotoğraflarını yükle, 3) ele
         var snapshots = await _snapshotLoader.LoadAsync(job.Location, now, cancellationToken);
         var elimination = TeamEliminator.Eliminate(job.Request, snapshots, now, _settings);
 
-        // 4) Sadece adaylar için puanlama karnesi, 5) puanla ve sırala
         var scoringTeams = await _scoringLoader.LoadAsync(job.Request, elimination.Candidates, now, cancellationToken);
         var ranked = TeamScorer.Rank(scoringTeams, job.Request.Urgency, _settings);
 
-        // 6) Karar günlüğüne yaz
         var distanceByTeam = snapshots.ToDictionary(s => s.TeamId, s => s.DistanceKm);
 
         var decision = new AssignmentDecision(
@@ -82,7 +77,6 @@ public sealed class TeamRecommendationService
             decision.AddCandidate(team.TeamId, distanceByTeam[team.TeamId], team.Score, rank: i + 1);
         }
 
-        // Karar ve tüm satırlar tek kayıt işleminde yazılır: yarım kayıt kalmaz.
         _db.AssignmentDecisions.Add(decision);
         await _db.SaveChangesAsync(cancellationToken);
 
