@@ -35,13 +35,18 @@ public sealed class AssignmentSettings
     public ScoringWeights UrgentWeights { get; set; } = new();
     public ScoringWeights NormalWeights { get; set; } = new();
 
-    // Bu aciliyet için hangi ağırlık seti kullanılır? Kritik ve yüksek: acil set; orta ve düşük: normal set.
-    public ScoringWeights GetWeights(Urgency urgency) => urgency switch
+    // Bu aciliyet hangi ağırlık setini kullanır? Kritik ve yüksek: acil set; orta ve düşük: normal set.
+    // "Acil mi normal mi" kararı sadece burada verilir; karar günlüğüne yazılan ad ve gerçekte kullanılan ağırlıklar çelişmesin.
+    public WeightSet GetWeightSet(Urgency urgency) => urgency switch
     {
-        Urgency.Critical or Urgency.High => UrgentWeights,
-        Urgency.Medium or Urgency.Low => NormalWeights,
+        Urgency.Critical or Urgency.High => WeightSet.Urgent,
+        Urgency.Medium or Urgency.Low => WeightSet.Normal,
         _ => throw new ArgumentOutOfRangeException(nameof(urgency), urgency, "Bilinmeyen aciliyet.")
     };
+
+    // Bu aciliyet için kullanılacak ağırlıklar (GetWeightSet'in seçtiği sete göre).
+    public ScoringWeights GetWeights(Urgency urgency) =>
+        GetWeightSet(urgency) == WeightSet.Urgent ? UrgentWeights : NormalWeights;
 
     // Mesafe notundaki D (km). Kritikte eleme sınırı yok, o yüzden şehrin köşegeni;
     // diğerlerinde D eleme sınırı. Hiçbir mesafe D'den büyük olamaz, not eksiye düşmez.

@@ -46,6 +46,8 @@ builder.Services.AddScoped<OperatorTeamService>();
 builder.Services.AddScoped<UrgencyEscalationService>();
 builder.Services.AddScoped<JobRequestLoader>();
 builder.Services.AddScoped<ScoringTeamLoader>();
+builder.Services.AddScoped<TeamSnapshotLoader>();
+builder.Services.AddScoped<TeamRecommendationService>();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

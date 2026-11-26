@@ -80,4 +80,22 @@ public class ScoringSettingsTests
 
         Assert.True(difference <= 1.0, $"Fark {difference:F2} km.");
     }
+
+
+    [Theory]
+    [InlineData(Urgency.Critical, WeightSet.Urgent)]
+    [InlineData(Urgency.High, WeightSet.Urgent)]
+    [InlineData(Urgency.Medium, WeightSet.Normal)]
+    [InlineData(Urgency.Low, WeightSet.Normal)]
+    public void GetWeightSet_follows_the_urgency(Urgency urgency, WeightSet expected)
+    {
+        Assert.Equal(expected, TestSettings.Standard().GetWeightSet(urgency));
+    }
+
+    [Fact]
+    public void GetWeightSet_unknown_urgency_throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => TestSettings.Standard().GetWeightSet((Urgency)99));
+    }
 }
