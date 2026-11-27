@@ -48,6 +48,7 @@ builder.Services.AddScoped<JobRequestLoader>();
 builder.Services.AddScoped<ScoringTeamLoader>();
 builder.Services.AddScoped<TeamSnapshotLoader>();
 builder.Services.AddScoped<TeamRecommendationService>();
+builder.Services.AddScoped<DemoLocationRefresher>();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
