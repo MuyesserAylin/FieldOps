@@ -140,5 +140,79 @@ public class TeamTests
 
         Assert.Empty(team.Shifts);
     }
+
+
+    [Fact]
+    public void UpdateLocation_ChangesLocationAndTime()
+    {
+        var team = CreateTeam();
+        var newLocation = new Point(30.6, 39.8) { SRID = 4326 };
+        var later = Now.AddSeconds(30);
+
+        team.UpdateLocation(newLocation, later);
+
+        Assert.Same(newLocation, team.Location);
+        Assert.Equal(later, team.LocationUpdatedAt);
+    }
+
+    [Fact]
+    public void UpdateLocation_WithTheSameTime_IsAllowed()
+    {
+        var team = CreateTeam();
+        var newLocation = new Point(30.6, 39.8) { SRID = 4326 };
+
+        team.UpdateLocation(newLocation, Now);
+
+        Assert.Same(newLocation, team.Location);
+        Assert.Equal(Now, team.LocationUpdatedAt);
+    }
+
+    [Fact]
+    public void UpdateLocation_WithAnOlderTime_Throws_AndKeepsTheOldValues()
+    {
+        var team = CreateTeam();
+        var oldLocation = team.Location;
+        var newLocation = new Point(30.6, 39.8) { SRID = 4326 };
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => team.UpdateLocation(newLocation, Now.AddSeconds(-1)));
+
+        Assert.Same(oldLocation, team.Location);
+        Assert.Equal(Now, team.LocationUpdatedAt);
+    }
+
+    [Fact]
+    public void UpdateLocation_WithNullLocation_Throws()
+    {
+        var team = CreateTeam();
+
+        Assert.Throws<ArgumentNullException>(() => team.UpdateLocation(null!, Now.AddSeconds(5)));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3857)]
+    public void UpdateLocation_WithWrongSrid_Throws_AndKeepsTheOldValues(int srid)
+    {
+        var team = CreateTeam();
+        var oldLocation = team.Location;
+        var wrong = new Point(30.6, 39.8) { SRID = srid };
+
+        Assert.Throws<ArgumentException>(() => team.UpdateLocation(wrong, Now.AddSeconds(5)));
+
+        Assert.Same(oldLocation, team.Location);
+        Assert.Equal(Now, team.LocationUpdatedAt);
+    }
+
+    [Fact]
+    public void UpdateLocation_DoesNotChangeStatusOrCooldown()
+    {
+        var team = CreateTeam();
+
+        team.UpdateLocation(new Point(30.6, 39.8) { SRID = 4326 }, Now.AddSeconds(5));
+
+        Assert.Equal(TeamStatus.Idle, team.Status);
+        Assert.Null(team.CooldownUntil);
+    }
 }
 

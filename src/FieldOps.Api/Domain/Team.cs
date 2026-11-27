@@ -55,6 +55,29 @@ public class Team
         Status = newStatus;
     }
 
+
+    // Ekibin yeni konumunu ve bu konumun bildirildiği anı yazar.
+    // Geç gelen eski bir mesaj yeni konumun üzerine yazmasın diye bildirim zamanı geriye gidemez;
+    // aynı zaman serbesttir. Ekip durumuna ve bekletme süresine dokunmaz: konum tazeliği ile durum ayrı şeylerdir.
+    // Eleme kuralı 4 (konum 60 saniyeden eskiyse aday olamaz) bu zamana bakar.
+    public void UpdateLocation(Point location, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        if (location.SRID != 4326)
+        {
+            throw new ArgumentException("Konum SRID'si 4326 olmalı.", nameof(location));
+        }
+
+        if (at < LocationUpdatedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(at), at, "Konum zamanı mevcut konum zamanından eski olamaz.");
+        }
+
+        Location = location;
+        LocationUpdatedAt = at;
+    }
+
     public int Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public TeamStatus Status { get; private set; }
