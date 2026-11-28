@@ -6,6 +6,8 @@
     ViewData["Title"] = "Ekipler";
     var inv = CultureInfo.InvariantCulture;
     var onShiftCount = Model.Teams.Count(t => t.OnShift);
+    var staleCount = Model.Teams.Count(t =>
+        LocationAge.IsStale(Model.Now - t.LocationUpdatedAt, Model.LocationMaxAgeSeconds));
 
     // Haritadaki renklerle aynı.
     string StatusColor(string status) => status switch
@@ -40,9 +42,30 @@
             margin-top: 0;
         }
 
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toolbar-actions form {
+            margin: 0;
+        }
+
         .summary {
             color: #57606a;
             margin: 0 0 1rem 0;
+        }
+
+        .stale-note {
+            color: #b42318;
+            margin: 0 0 1rem 0;
+        }
+
+        .stale {
+            color: #b42318;
+            font-weight: 600;
+            margin-left: 0.3rem;
         }
 
         #map {
@@ -105,8 +128,21 @@
 <div class="card">
     <div class="toolbar">
         <h1>Ekipler</h1>
-        <a class="button" href="/Operator">← Operatör paneli</a>
+        <div class="toolbar-actions">
+            @if (Model.ShowRefreshButton)
+            {
+                <form method="post" asp-page-handler="RefreshLocations">
+                    <button type="submit" class="button">Konumları yenile (demo)</button>
+                </form>
+            }
+            <a class="button" href="/Operator">← Operatör paneli</a>
+        </div>
     </div>
+
+    @if (Model.SuccessMessage is not null)
+    {
+        <div class="card success">@Model.SuccessMessage</div>
+    }
 
     @if (Model.Teams.Count == 0)
     {
@@ -115,6 +151,14 @@
     else
     {
         <p class="summary">@Model.Teams.Count ekip, @onShiftCount tanesi şu an vardiyada.</p>
+
+        @if (staleCount > 0)
+        {
+            <p class="stale-note">
+                @staleCount ekibin konumu @Model.LocationMaxAgeSeconds saniyeden eski; eleme kuralı gereği bu ekipler aday
+                olamaz.
+            </p>
+        }
 
         <div id="map" data-teams="@Model.TeamsJson" data-center-lat="@ServiceArea.CenterLatitude.ToString(inv)"
              data-center-lon="@ServiceArea.CenterLongitude.ToString(inv)"
@@ -142,12 +186,15 @@
                             <th>Seviye</th>
                             <th>Konum</th>
                             <th>Konum zamanı (UTC)</th>
+                            <th>Konum yaşı</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var team in Model.Teams)
                         {
                             var color = StatusColor(team.Status);
+                            var age = Model.Now - team.LocationUpdatedAt;
+                            var stale = LocationAge.IsStale(age, Model.LocationMaxAgeSeconds);
                             <tr class="@(team.OnShift ? "" : "off-shift")">
                                 <td>@team.Name</td>
                                 <td>
@@ -169,6 +216,13 @@
                                 </td>
                                 <td>@team.Latitude.ToString("F5", inv), @team.Longitude.ToString("F5", inv)</td>
                                 <td>@team.LocationUpdatedAt.UtcDateTime.ToString("dd.MM.yyyy HH:mm", inv)</td>
+                                <td>
+                                    @LocationAge.Format(age)
+                                    @if (stale)
+                                    {
+                                        <span class="stale">Eski</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>

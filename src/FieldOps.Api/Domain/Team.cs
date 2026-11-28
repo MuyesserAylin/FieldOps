@@ -55,6 +55,25 @@ public class Team
         Status = newStatus;
     }
 
+
+    public void UpdateLocation(Point location, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        if (location.SRID != 4326)
+        {
+            throw new ArgumentException("Konum SRID'si 4326 olmalı.", nameof(location));
+        }
+
+        if (at < LocationUpdatedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(at), at, "Konum zamanı mevcut konum zamanından eski olamaz.");
+        }
+
+        Location = location;
+        LocationUpdatedAt = at;
+    }
+
     public int Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public TeamStatus Status { get; private set; }
