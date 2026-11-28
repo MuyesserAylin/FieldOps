@@ -56,10 +56,6 @@ public class Team
     }
 
 
-    // Ekibin yeni konumunu ve bu konumun bildirildiği anı yazar.
-    // Geç gelen eski bir mesaj yeni konumun üzerine yazmasın diye bildirim zamanı geriye gidemez;
-    // aynı zaman serbesttir. Ekip durumuna ve bekletme süresine dokunmaz: konum tazeliği ile durum ayrı şeylerdir.
-    // Eleme kuralı 4 (konum 60 saniyeden eskiyse aday olamaz) bu zamana bakar.
     public void UpdateLocation(Point location, DateTimeOffset at)
     {
         ArgumentNullException.ThrowIfNull(location);
